@@ -34,12 +34,14 @@ class Solver(BaseSolver):
         # `Objective.get_objective`. This defines the benchmark's API for
         # passing the objective to the solver.
         # It is customizable for each benchmark.
-        self.dataset = dataset
         self.mask = mask
-        
-        self.target = self.dataset[self.dataset['subject'] == self.parameters['target_subject'][0]]['local_path']
+        self.dataset = dataset[dataset['task'] == 'task-ArchiStandard']
+
+        print(self.dataset)
+
+        self.target = self.dataset[(self.dataset['subject'] == self.parameters['target_subject'][0])]['local_path']
         self.source = self.dataset[self.dataset['subject'] != self.parameters['target_subject'][0]]['local_path']
-        
+
 
     def run(self, n_iter=1):
         # This is the function that is called to evaluate the solver.

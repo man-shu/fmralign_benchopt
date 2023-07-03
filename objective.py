@@ -43,13 +43,15 @@ class Objective(BaseObjective):
         # `Solver.get_result`. This defines the benchmark's API to pass
         # solvers' result. This is customizable for each benchmark.
         self.alignment_estimator = alignment_estimator
-        source_test = self.dataset[self.dataset['subject'] != self.parameters['target_subject'][0]]['local_path']
-        target_pred = alignment_estimator.transform(source_test)
+        source_test = self.dataset[self.dataset['task'] == 'task-RSVPLanguage']
+        source_test = source_test[source_test['subject'] != self.parameters['target_subject'][0]]['local_path']
+        target_pred = alignment_estimator.transform(source_test.values)
         
-        baseline_score = score_voxelwise(
-            source_test, source_test, self.mask)
-        aligned_score = score_voxelwise(
-            target_pred, target_pred, self.mask)
+        baseline_score = np.mean(score_voxelwise(
+            source_test, source_test, self.mask, loss='corr'))
+        aligned_score = np.mean(score_voxelwise(
+            target_pred, target_pred, self.mask, loss='corr'))
+        print(baseline_score, aligned_score)
 
         # This method can return many metrics in a dictionary. One of these
         # metrics needs to be `value` for convergence detection purposes.
