@@ -23,24 +23,21 @@ class Solver(BaseSolver):
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
-        'target_subject': ['sub-08'],
+        #'target_subject': ['sub-09'],
     }
     
     SingleRunCriterion = SingleRunCriterion()
 
-    def set_objective(self, dataset, mask):
+    def set_objective(self, source, target, test, mask):
         # Define the information received by each solver from the objective.
         # The arguments of this function are the results of the
         # `Objective.get_objective`. This defines the benchmark's API for
         # passing the objective to the solver.
         # It is customizable for each benchmark.
+        self.source = source
+        self.target = target
+        self.test = test
         self.mask = mask
-        self.dataset = dataset[dataset['task'] == 'task-ArchiStandard']
-
-        print(self.dataset)
-
-        self.target = self.dataset[(self.dataset['subject'] == self.parameters['target_subject'][0])]['local_path']
-        self.source = self.dataset[self.dataset['subject'] != self.parameters['target_subject'][0]]['local_path']
 
 
     def run(self, n_iter=1):
@@ -57,4 +54,6 @@ class Solver(BaseSolver):
         # The outputs of this function are the arguments of `Objective.compute`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-        return self.alignment_estimator
+        return dict(estimator=self.alignment_estimator,
+                    test=self.test,
+                    )
