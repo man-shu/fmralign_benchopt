@@ -41,6 +41,6 @@ class Dataset(BaseDataset):
         file_names = file_names.rename(columns={0: 'subject', 1: 'session', 2: 'task'})
         downloaded_db = downloaded_db.join(file_names)
         mask_file = os.path.join(root, 'ibc_data', 'masks', 'gm_mask_3mm.nii.gz')
-        masker = NiftiMasker(mask_img=mask_file, standardize=True).fit()
+        masker = NiftiMasker(mask_img=mask_file, standardize=False, memory=root).fit()
 
         return dict(dataset=downloaded_db, mask=masker)
