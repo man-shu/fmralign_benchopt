@@ -8,9 +8,8 @@ with safe_import_context() as import_ctx:
 
     # import your reusable functions here
     from benchmark_utils import gradient_ols
-
+    from benchopt.stopping_criterion import SingleRunCriterion
     from fmralign.pairwise_alignment import PairwiseAlignment
-    from nilearn import maskers, masking
 
 
 # The benchmark solvers must be named `Solver` and
@@ -26,23 +25,26 @@ class Solver(BaseSolver):
     parameters = {
         'target_subject': 'sub-08',
     }
+    
+    SingleRunCriterion = SingleRunCriterion()
 
-    def set_objective(self, dataset):
+    def set_objective(self, dataset, mask):
         # Define the information received by each solver from the objective.
         # The arguments of this function are the results of the
         # `Objective.get_objective`. This defines the benchmark's API for
         # passing the objective to the solver.
         # It is customizable for each benchmark.
-        self.target = dataset[dataset['subject'] == parameters['target_subject']]
-        self.source = dataset[dataset['subject'] != parameters['target_subject']]
+        self.target = dataset[dataset['subject'] == self.parameters['target_subject']]
+        self.source = dataset[dataset['subject'] != self.parameters['target_subject']]
+        self.mask = mask
         
 
-    def run(self, masker, subject_list, n_iter=1):
+    def run(self, n_iter=1):
         # This is the function that is called to evaluate the solver.
         # It runs the algorithm for a given a number of iterations `n_iter`.
 
         alignement_estimator = PairwiseAlignment(
-            alignment_method='identity', n_pieces=1, mask=masker)
+            alignment_method='identity', n_pieces=1, mask=self.mask)
         self.alignment_estimator = alignement_estimator
             
 
