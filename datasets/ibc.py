@@ -9,6 +9,7 @@ with safe_import_context() as import_ctx:
     import ibc_api.utils as ibc
     from nilearn import image
     import os
+    from nilearn.maskers import NiftiMasker
 
 
 # All datasets must be named `Dataset` and inherit from `BaseDataset`
@@ -29,15 +30,17 @@ class Dataset(BaseDataset):
         # to `Objective.set_data`. This defines the benchmark's
         # API to pass data. It is customizable for each benchmark.
 
+        root = os.path.join('/storage/store/work/haggarwa/', 'benchopt_sprint', 'fmralign_benchopt')
         ibc.authenticate()
 
         db = ibc.get_info(data_type="statistic_map")
-        filtered_db = ibc.filter_data(db, subject_list=["sub-08", ""], task_list=["Discount"])
-        downloaded_db = ibc.download_data(filtered_db, organise_by='task')
+        filtered_db = ibc.filter_data(db, subject_list=["sub-08", "sub-04", "sub-05", "sub-15"], task_list=['RSVPLanguage', 'ArchiStandard'])                                                                             
+        downloaded_db = ibc.download_data(filtered_db)
         file_names = downloaded_db['local_path'].str.split('/', expand=False).str[-1]
         file_names = file_names.str.split('_', expand=True)
+        file_names = file_names.rename(columns={0: 'subject', 1: 'session', 2: 'task'})
         downloaded_db = downloaded_db.join(file_names)
-        mask_file = os.path.join('ibc_data', 'masks', 'gm_mask_3mm.nii.gz')
-        mask = image.load_img(mask_file)
+        mask_file = os.path.join(root, 'ibc_data', 'masks', 'gm_mask_3mm.nii.gz')
+        masker = NiftiMasker(mask_img=mask_file, standardize=True).fit()
 
-        return dict(dataset=downloaded_db, mask=mask)
+        return dict(dataset=downloaded_db, mask=masker)

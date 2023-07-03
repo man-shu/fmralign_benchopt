@@ -23,7 +23,7 @@ class Solver(BaseSolver):
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
-        'target_subject': 'sub-08',
+        'target_subject': ['sub-08'],
     }
     
     SingleRunCriterion = SingleRunCriterion()
@@ -34,9 +34,11 @@ class Solver(BaseSolver):
         # `Objective.get_objective`. This defines the benchmark's API for
         # passing the objective to the solver.
         # It is customizable for each benchmark.
-        self.target = dataset[dataset['subject'] == self.parameters['target_subject']]
-        self.source = dataset[dataset['subject'] != self.parameters['target_subject']]
+        self.dataset = dataset
         self.mask = mask
+        
+        self.target = self.dataset[self.dataset['subject'] == self.parameters['target_subject'][0]]['local_path']
+        self.source = self.dataset[self.dataset['subject'] != self.parameters['target_subject'][0]]['local_path']
         
 
     def run(self, n_iter=1):
@@ -44,7 +46,7 @@ class Solver(BaseSolver):
         # It runs the algorithm for a given a number of iterations `n_iter`.
 
         alignement_estimator = PairwiseAlignment(
-            alignment_method='identity', n_pieces=1, mask=self.mask)
+            alignment_method='identity', n_pieces=1, mask=self.mask).fit(self.source, self.target)
         self.alignment_estimator = alignement_estimator
             
 

@@ -5,7 +5,7 @@ from benchopt import BaseObjective, safe_import_context
 # - getting requirements info when all dependencies are not installed.
 with safe_import_context() as import_ctx:
     import numpy as np
-    from fmralign._utils import voxelwise_correlation
+    from fmralign.metrics import score_voxelwise
 
 
 # The benchmark objective must be named `Objective` and
@@ -20,7 +20,7 @@ class Objective(BaseObjective):
     # All parameters 'p' defined here are available as 'self.p'.
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
-        'target_subject': 'sub-08',
+        'target_subject': ['sub-08'],
     }
 
     # Minimal version of benchopt required to run this benchmark.
@@ -38,17 +38,17 @@ class Objective(BaseObjective):
         # if `whiten_y` is True, remove the mean of `y`.
 
 
-    def compute(self):
+    def compute(self, alignment_estimator):
         # The arguments of this function are the outputs of the
         # `Solver.get_result`. This defines the benchmark's API to pass
         # solvers' result. This is customizable for each benchmark.
-        alignment_estimator = self.alignment_estimator
-        source_test = self.dataset[self.dataset['subject'] != self.parameters['target_subject']]
-        target_pred = alignment_estimator.transform()
+        self.alignment_estimator = alignment_estimator
+        source_test = self.dataset[self.dataset['subject'] != self.parameters['target_subject'][0]]['local_path']
+        target_pred = alignment_estimator.transform(source_test)
         
-        baseline_score = voxelwise_correlation(
+        baseline_score = score_voxelwise(
             source_test, source_test, self.mask)
-        aligned_score = voxelwise_correlation(
+        aligned_score = score_voxelwise(
             target_pred, target_pred, self.mask)
 
         # This method can return many metrics in a dictionary. One of these
