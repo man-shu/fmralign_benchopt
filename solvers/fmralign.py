@@ -23,18 +23,19 @@ class Solver(BaseSolver):
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
-        'method': ['identity'],
+        'method': ['scaled_orthogonal', 'ridge_cv']
     }
 
     stopping_criterion = SingleRunCriterion()
 
-    def set_objective(self, source, target, mask):
+    def set_objective(self, source, source_subjects, target, mask):
         # Define the information received by each solver from the objective.
         # The arguments of this function are the results of the
         # `Objective.get_objective`. This defines the benchmark's API for
         # passing the objective to the solver.
         # It is customizable for each benchmark.
         self.source = source
+        self.source_subjects = source_subjects
         self.target = target
         self.mask = mask
 
@@ -43,15 +44,17 @@ class Solver(BaseSolver):
         # It runs the algorithm for a given a number of iterations `n_iter`.`
 
         print("Running the solver\n")
-
-        alignement_estimator = PairwiseAlignment(
-            alignment_method=self.method,
-            n_pieces=1,
-            mask=self.mask,
-            memory=Memory(),
-            memory_level=1,
-        ).fit(self.source, self.target)
-        self.alignment_estimator = alignement_estimator
+        dict_alignment = {}
+        for contrasts, sub in zip(self.source, self.source_subjects):
+            alignement_estimator = PairwiseAlignment(
+                alignment_method=self.method,
+                n_pieces=150,
+                mask=self.mask,
+                memory=Memory(),
+                memory_level=1,
+            ).fit(contrasts, self.target)
+            dict_alignment[sub] = alignement_estimator
+        self.alignment_estimators = dict_alignment
 
     def get_result(self):
         # Return the result from one optimization run.
@@ -59,4 +62,4 @@ class Solver(BaseSolver):
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
 
-        return self.alignment_estimator
+        return self.alignment_estimators

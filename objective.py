@@ -56,6 +56,13 @@ class Objective(BaseObjective):
             .unique()
             .tolist()
         )
+        self.source_subjects = (
+            self.alignment_dataset[
+                self.alignment_dataset["subject"] != self.target_subject
+            ]["subject"]
+            .unique()
+            .tolist()
+        )
         self.target = (
             self.alignment_dataset[
                 self.alignment_dataset["subject"] == self.target_subject
@@ -63,23 +70,12 @@ class Objective(BaseObjective):
             .unique()
             .tolist()
         )
-        rsvp_imgs = (
-            self.projected_dataset[
-                self.projected_dataset["subject"] != self.target_subject
-            ]["path"]
-            .unique()
-            .tolist()
-        )
-        # Concatenate the images to have a single 4D image.
-        print("Concatenating the images\n")
-        self.rsvp_imgs = concat_imgs(rsvp_imgs)
-        print("Done concatenating the images\n")
         self.mask = mask
 
         # `set_data` can be used to preprocess the data. For instance,
         # if `whiten_y` is True, remove the mean of `y`.
 
-    def compute(self, alignment_estimator):
+    def compute(self, alignment_estimators):
         # The arguments of this function are the outputs of the
         # `Solver.get_result`. This defines the benchmark's API to pass
         # solvers' result. This is customizable for each benchmark.
@@ -87,7 +83,15 @@ class Objective(BaseObjective):
         groups = self.projected_dataset[
             self.projected_dataset["subject"] != self.target_subject
         ]["subject"].values
-        X = self.mask.transform(alignment_estimator.transform(self.rsvp_imgs))
+        X = []
+        for subject in self.source_subjects:
+            X.append(
+                self.mask.transform(alignment_estimators[subject].transform(
+                        self.projected_dataset[self.projected_dataset["subject"] == subject]["path"].unique().tolist()
+                    )
+                )
+            )
+        X = np.vstack(X)
         X = normalize(X, axis=1)
         y = self.projected_dataset[
             self.projected_dataset["subject"] != self.target_subject
@@ -122,6 +126,7 @@ class Objective(BaseObjective):
 
         return dict(
             source=self.source,
+            source_subjects=self.source_subjects,
             target=self.target,
             mask=self.mask,
         )
