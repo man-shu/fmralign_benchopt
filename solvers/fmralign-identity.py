@@ -16,18 +16,17 @@ with safe_import_context() as import_ctx:
 # The benchmark solvers must be named `Solver` and
 # inherit from `BaseSolver` for `benchopt` to work properly.
 class Solver(BaseSolver):
-
     # Name to select the solver in the CLI and to display the results.
-    name = 'fmralign-identity'
+    name = "fmralign-identity"
 
     # List of parameters for the solver. The benchmark will consider
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
-        #'target_subject': ['sub-09'],
+        #'validation': ['sub-09'],
     }
-    
-    SingleRunCriterion = SingleRunCriterion()
+
+    stopping_criterion = SingleRunCriterion()
 
     def set_objective(self, source, target, mask):
         # Define the information received by each solver from the objective.
@@ -39,20 +38,25 @@ class Solver(BaseSolver):
         self.target = target
         self.mask = mask
 
-
-    def run(self, n_iter=1):
+    def run(self, n_iter):
         # This is the function that is called to evaluate the solver.
         # It runs the algorithm for a given a number of iterations `n_iter`.`
 
+        print("Running the solver\n")
+
         alignement_estimator = PairwiseAlignment(
-            alignment_method='identity', n_pieces=1, mask=self.mask, memory=Memory(), memory_level=1).fit(self.source, self.target)
+            alignment_method="identity",
+            n_pieces=1,
+            mask=self.mask,
+            memory=Memory(),
+            memory_level=1,
+        ).fit(self.source, self.target)
         self.alignment_estimator = alignement_estimator
-            
 
     def get_result(self):
         # Return the result from one optimization run.
         # The outputs of this function are the arguments of `Objective.compute`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-        
+
         return self.alignment_estimator
