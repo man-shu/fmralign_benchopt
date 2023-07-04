@@ -47,7 +47,7 @@ class Dataset(BaseDataset):
         # masker = NiftiMasker(mask_img=mask_file, standardize=False, memory=root).fit()
         
         data = fetch_ibc(data_dir=ROOT_FOLDER)
-        subjects = [f"sub-{i:02d}" for i in [1, 4, 5, 6, 7, 9, 11, 13, 14]]
+        subjects = [f"sub-{i:02d}" for i in [1, 4, 5, 6, ]]#7, 9, 11, 13, 14]]
         archi_dataset = pd.DataFrame(
             columns=["subject", "path"])
 
@@ -61,7 +61,7 @@ class Dataset(BaseDataset):
         rsvp_dataset["path"] = [os.path.join(ROOT_FOLDER, "rsvp_trial", "3mm", f"{sub}.nii.gz") for sub in subjects]
         
         mask_3mm = os.path.join(ROOT_FOLDER, 'masks', 'gm_mask_3mm.nii.gz')
-        masker = NiftiMasker(mask_img=mask_3mm, standardize=False, memory=ROOT_FOLDER).fit()
+        masker = NiftiMasker(mask_img=mask_3mm, standardize=False, memory=ROOT_FOLDER, verbose=1).fit()
 
         return dict(alignment_dataset=archi_dataset,
                     projected_dataset=rsvp_dataset,

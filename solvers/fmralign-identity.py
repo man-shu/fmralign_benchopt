@@ -10,6 +10,7 @@ with safe_import_context() as import_ctx:
     from benchmark_utils import gradient_ols
     from benchopt.stopping_criterion import SingleRunCriterion
     from fmralign.pairwise_alignment import PairwiseAlignment
+    from joblib import Memory
 
 
 # The benchmark solvers must be named `Solver` and
@@ -28,7 +29,7 @@ class Solver(BaseSolver):
     
     SingleRunCriterion = SingleRunCriterion()
 
-    def set_objective(self, source, target, test, mask):
+    def set_objective(self, source, target, mask):
         # Define the information received by each solver from the objective.
         # The arguments of this function are the results of the
         # `Objective.get_objective`. This defines the benchmark's API for
@@ -36,16 +37,15 @@ class Solver(BaseSolver):
         # It is customizable for each benchmark.
         self.source = source
         self.target = target
-        self.test = test
         self.mask = mask
 
 
     def run(self, n_iter=1):
         # This is the function that is called to evaluate the solver.
-        # It runs the algorithm for a given a number of iterations `n_iter`.
+        # It runs the algorithm for a given a number of iterations `n_iter`.`
 
         alignement_estimator = PairwiseAlignment(
-            alignment_method='identity', n_pieces=1, mask=self.mask).fit(self.source, self.target)
+            alignment_method='identity', n_pieces=1, mask=self.mask, memory=Memory(), memory_level=1).fit(self.source, self.target)
         self.alignment_estimator = alignement_estimator
             
 
@@ -54,6 +54,5 @@ class Solver(BaseSolver):
         # The outputs of this function are the arguments of `Objective.compute`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-        return dict(estimator=self.alignment_estimator,
-                    test=self.test,
-                    )
+        
+        return self.alignment_estimator

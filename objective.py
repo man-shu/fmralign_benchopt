@@ -6,6 +6,7 @@ from benchopt import BaseObjective, safe_import_context
 with safe_import_context() as import_ctx:
     import numpy as np
     from fmralign.metrics import score_voxelwise
+    from nilearn.image import concat_imgs
 
 
 # The benchmark objective must be named `Objective` and
@@ -20,7 +21,7 @@ class Objective(BaseObjective):
     # All parameters 'p' defined here are available as 'self.p'.
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
-        'target_subject': ['sub-04'],
+        'target_subject': ['sub-01', 'sub-04', 'sub-05', 'sub-06'],
     }
 
     # Minimal version of benchopt required to run this benchmark.
@@ -33,24 +34,31 @@ class Objective(BaseObjective):
         # API to pass data. This is customizable for each benchmark.
         self.alignment_dataset = alignment_dataset
         self.projected_dataset = projected_dataset
+        self.source = self.alignment_dataset[self.alignment_dataset['subject'] != self.parameters['target_subject'][0]]["path"].to_list()
+        self.target = self.alignment_dataset[self.alignment_dataset['subject'] == self.parameters['target_subject'][0]]["path"].to_list()
+        test_dataset = self.projected_dataset[self.projected_dataset['subject'] != self.parameters['target_subject'][0]]["path"].to_list()
+        # Concatenate the images to have a single 4D image.
+        print("Concatenating the images\n")
+        self.test_dataset = concat_imgs(test_dataset)        
+        print("Done concatenating the images\n")
         self.mask = mask
 
         # `set_data` can be used to preprocess the data. For instance,
         # if `whiten_y` is True, remove the mean of `y`.
 
 
-    def compute(self, alignment_estimator, test):
+    def compute(self, alignment_estimator):
         # The arguments of this function are the outputs of the
         # `Solver.get_result`. This defines the benchmark's API to pass
         # solvers' result. This is customizable for each benchmark.
-        self.alignment_estimator = alignment_estimator
-        source_test = test
+        
+        source_test = self.test_dataset
         target_pred = alignment_estimator.transform(source_test)
         
         # Compute the score of the alignment.
         # TODO : implement an SVC.
-        baseline_score = np.mean(score_voxelwise(source_test, target_pred, self.mask))
-        aligned_score = np.mean(score_voxelwise(source_test, target_pred, self.mask))
+        baseline_score = np.mean(score_voxelwise(source_test, target_pred, self.mask, loss='corr'))
+        aligned_score = np.mean(score_voxelwise(source_test, target_pred, self.mask, loss='corr'))
 
         # This method can return many metrics in a dictionary. One of these
         # metrics needs to be `value` for convergence detection purposes.
@@ -71,13 +79,8 @@ class Objective(BaseObjective):
         # benchmark's API for passing the objective to the solver.
         # It is customizable for each benchmark.
         
-        source = self.alignment_dataset[self.alignment_dataset['subject'] != self.parameters['target_subject'][0]]["path"].to_list()
-        target = self.alignment_dataset[self.alignment_dataset['subject'] == self.parameters['target_subject'][0]]["path"].to_list()
-        test = self.projected_dataset[self.projected_dataset['subject'] != self.parameters['target_subject'][0]]["path"].to_list()
-        
         return dict(
-            source=source,
-            target=target,
-            test=test,
+            source=self.source,
+            target=self.target,
             mask=self.mask,
         )
