@@ -17,13 +17,13 @@ with safe_import_context() as import_ctx:
 # inherit from `BaseSolver` for `benchopt` to work properly.
 class Solver(BaseSolver):
     # Name to select the solver in the CLI and to display the results.
-    name = "fmralign-identity"
+    name = "fmralign"
 
     # List of parameters for the solver. The benchmark will consider
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
-        #'validation': ['sub-09'],
+        'method': ['identity'],
     }
 
     stopping_criterion = SingleRunCriterion()
@@ -45,7 +45,7 @@ class Solver(BaseSolver):
         print("Running the solver\n")
 
         alignement_estimator = PairwiseAlignment(
-            alignment_method="identity",
+            alignment_method=self.method,
             n_pieces=1,
             mask=self.mask,
             memory=Memory(),

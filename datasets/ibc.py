@@ -24,7 +24,7 @@ class Dataset(BaseDataset):
     # the cross product for each key in the dictionary.
     # Any parameters 'param' defined here is available as `self.param`.
     parameters = {
-        "random_state": [27],
+        # "random_state": [27],
     }
 
     def get_data(self):
@@ -40,8 +40,13 @@ class Dataset(BaseDataset):
                 4,
                 5,
                 6,
+                7,
+                9,
+                11,
+                13,
+                14,
             ]
-        ]  # 7, 9, 11, 13, 14]]
+        ]
         archi_dataset = pd.DataFrame(columns=["subject", "path"])
 
         archi_dataset["subject"] = subjects

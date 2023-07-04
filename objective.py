@@ -13,6 +13,7 @@ with safe_import_context() as import_ctx:
     from sklearn.svm import LinearSVC
     from sklearn.model_selection import LeaveOneGroupOut
     from sklearn.base import clone
+    from tqdm import tqdm
 
 
 # The benchmark objective must be named `Objective` and
@@ -26,7 +27,16 @@ class Objective(BaseObjective):
     # All parameters 'p' defined here are available as 'self.p'.
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
-        "target_subject": ["sub-01", "sub-04", "sub-05"],
+        "target_subject": ["sub-01", 
+                           "sub-04", 
+                           "sub-05",
+                           "sub-06",
+                           "sub-07",
+                           "sub-09",
+                           "sub-11",
+                           "sub-13",
+                           "sub-14",
+                           ],
     }
 
     # Minimal version of benchopt required to run this benchmark.
@@ -62,7 +72,6 @@ class Objective(BaseObjective):
         )
         # Concatenate the images to have a single 4D image.
         print("Concatenating the images\n")
-        print(len(rsvp_imgs))
         self.rsvp_imgs = concat_imgs(rsvp_imgs)
         print("Done concatenating the images\n")
         self.mask = mask
@@ -77,29 +86,27 @@ class Objective(BaseObjective):
         pipeline = make_pipeline(LinearSVC(max_iter=10000))
         groups = self.projected_dataset[
             self.projected_dataset["subject"] != self.target_subject
-        ]["subject"]
+        ]["subject"].values
         X = self.mask.transform(alignment_estimator.transform(self.rsvp_imgs))
         X = normalize(X, axis=1)
         y = self.projected_dataset[
             self.projected_dataset["subject"] != self.target_subject
         ]["condition"].values
         # Leave one subject out cross validation
-        acc = []
+        dict_acc = {}
         logo = LeaveOneGroupOut()
         print("Starting cross validation\n")
-        for train, test in logo.split(X, y, groups=groups):
+        for train, test in tqdm(logo.split(X, y, groups=groups)):
             clf = clone(pipeline)
             clf.fit(X[train], y[train])
             score = clf.score(X[test], y[test])
-            acc.append(score)
-            print("Target: ", self.target_subject)
-            print("Score: ", score)
+            dict_acc[groups[test][0]] = score
 
+        dict_acc["value"] = np.mean(list(dict_acc.values()))
+        
         # This method can return many metrics in a dictionary. One of these
         # metrics needs to be `value` for convergence detection purposes.
-        return dict(
-            value=np.mean(acc),
-        )
+        return dict_acc
 
     def get_one_solution(self):
         # Return one solution. The return value should be an object compatible
