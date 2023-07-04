@@ -12,7 +12,7 @@ with safe_import_context() as import_ctx:
     from nilearn import image
     from nilearn.maskers import NiftiMasker
     from fmralignbench.fetchers import fetch_ibc
-    from fmralignbench.conf import ROOT_FOLDER
+    from benchmark_utils.config import ROOT_FOLDER
 
 
 # All datasets must be named `Dataset` and inherit from `BaseDataset`
@@ -46,7 +46,6 @@ class Dataset(BaseDataset):
         # mask_file = os.path.join(root, 'ibc_data', 'masks', 'gm_mask_3mm.nii.gz')
         # masker = NiftiMasker(mask_img=mask_file, standardize=False, memory=root).fit()
         
-        ROOT_FOLDER = "/storage/store3/work/pbarbara/fmralignbench_data/"
         data = fetch_ibc(data_dir=ROOT_FOLDER)
         subjects = [f"sub-{i:02d}" for i in [1, 4, 5, 6, 7, 9, 11, 13, 14]]
         archi_dataset = pd.DataFrame(
