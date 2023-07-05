@@ -28,16 +28,17 @@ class Objective(BaseObjective):
     # All parameters 'p' defined here are available as 'self.p'.
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
-        "target_subject": ["sub-01", 
-                           "sub-04", 
-                           "sub-05",
-                           "sub-06",
-                           "sub-07",
-                           "sub-09",
-                           "sub-11",
-                           "sub-13",
-                           "sub-14",
-                           ],
+        "target_subject": [
+            "sub-01",
+            "sub-04",
+            "sub-05",
+            "sub-06",
+            "sub-07",
+            "sub-09",
+            "sub-11",
+            "sub-13",
+            "sub-14",
+        ],
     }
 
     # Minimal version of benchopt required to run this benchmark.
@@ -88,19 +89,26 @@ class Objective(BaseObjective):
         ]["subject"].values
         X = []
         for subject in self.source_subjects:
-            if method == "fastsrm" :
+            if method == "fastsrm":
                 input_data = self.mask.transform(
-                            concat_imgs(self.projected_dataset[self.projected_dataset["subject"] == subject]["path"].unique().tolist())
-                        )
-                X.append(
-                    alignment_estimators[subject].transform(
-                        [input_data.T]
-                    ).T
+                    concat_imgs(
+                        self.projected_dataset[
+                            self.projected_dataset["subject"] == subject
+                        ]["path"]
+                        .unique()
+                        .tolist()
+                    )
                 )
+                X.append(alignment_estimators[subject].transform([input_data.T]).T)
             else:
                 X.append(
-                    self.mask.transform(alignment_estimators[subject].transform(
-                            self.projected_dataset[self.projected_dataset["subject"] == subject]["path"].unique().tolist()
+                    self.mask.transform(
+                        alignment_estimators[subject].transform(
+                            self.projected_dataset[
+                                self.projected_dataset["subject"] == subject
+                            ]["path"]
+                            .unique()
+                            .tolist()
                         )
                     )
                 )
@@ -113,21 +121,24 @@ class Objective(BaseObjective):
         dict_acc = {}
         logo = LeaveOneGroupOut()
         print("Starting cross validation\n")
-        
+
         def decode(train, test):
             clf = clone(pipeline)
             clf.fit(X[train], y[train])
             score = clf.score(X[test], y[test])
             source_sub = groups[test][0]
             return score, source_sub
-        
-        score_list = Parallel(n_jobs=10, verbose=3)(delayed(decode)(train, test) for train, test in logo.split(X, y, groups=groups))
-        
+
+        score_list = Parallel(n_jobs=10, verbose=3)(
+            delayed(decode)(train, test)
+            for train, test in logo.split(X, y, groups=groups)
+        )
+
         for score, source_sub in score_list:
             dict_acc[source_sub] = score
 
         dict_acc["value"] = np.mean(list(dict_acc.values()))
-        
+
         # This method can return many metrics in a dictionary. One of these
         # metrics needs to be `value` for convergence detection purposes.
         return dict_acc

@@ -15,6 +15,7 @@ with safe_import_context() as import_ctx:
     from benchmark_utils.config import ROOT_FOLDER
     import os
 
+
 # The benchmark solvers must be named `Solver` and
 # inherit from `BaseSolver` for `benchopt` to work properly.
 class Solver(BaseSolver):
@@ -24,9 +25,7 @@ class Solver(BaseSolver):
     # List of parameters for the solver. The benchmark will consider
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
-    parameters = {
-        'method': ['identity', 'fastsrm', 'scaled_orthogonal', 'ridge_cv']
-    }
+    parameters = {"method": ["identity", "fastsrm", "scaled_orthogonal", "ridge_cv"]}
 
     stopping_criterion = SingleRunCriterion()
 
@@ -47,21 +46,21 @@ class Solver(BaseSolver):
 
         print("Running the solver\n")
         dict_alignment = {}
-        if self.method == 'fastsrm':
-            srm_path = os.path.join(ROOT_FOLDER, 'fastsrm')
+        if self.method == "fastsrm":
+            srm_path = os.path.join(ROOT_FOLDER, "fastsrm")
             if not os.path.exists(srm_path):
                 os.makedirs(srm_path)
-            srm = IdentifiableFastSRM(n_components=50,
-                                      aggregate="mean",
-                                      temp_dir=srm_path, 
-                                      tol=1e-10,
-                                      n_iter=100,
-                                      n_jobs=5)
+            srm = IdentifiableFastSRM(
+                n_components=50,
+                aggregate="mean",
+                temp_dir=srm_path,
+                tol=1e-10,
+                n_iter=100,
+                n_jobs=5,
+            )
             imgs_list = [self.mask.transform(contrasts).T for contrasts in self.source]
             print("Fitting SRM")
-            alignment_estimator = srm.fit(
-                imgs_list
-            )
+            alignment_estimator = srm.fit(imgs_list)
             for sub in self.source_subjects:
                 dict_alignment[sub] = alignment_estimator
         else:
@@ -81,8 +80,9 @@ class Solver(BaseSolver):
         # The outputs of this function are the arguments of `Objective.compute`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-        output_dict = dict(alignment_estimators=self.alignment_estimators,
-                    method=self.method,
-                    )
+        output_dict = dict(
+            alignment_estimators=self.alignment_estimators,
+            method=self.method,
+        )
 
         return output_dict
