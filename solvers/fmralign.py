@@ -11,7 +11,9 @@ with safe_import_context() as import_ctx:
     from benchopt.stopping_criterion import SingleRunCriterion
     from fmralign.pairwise_alignment import PairwiseAlignment
     from joblib import Memory
-
+    from fastsrm.identifiable_srm import IdentifiableFastSRM
+    from benchmark_utils.config import ROOT_FOLDER
+    import os
 
 # The benchmark solvers must be named `Solver` and
 # inherit from `BaseSolver` for `benchopt` to work properly.
@@ -23,7 +25,7 @@ class Solver(BaseSolver):
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
-        'method': ['scaled_orthogonal', 'ridge_cv']
+        'method': ['identity', 'fastsrm', 'scaled_orthogonal', 'ridge_cv']
     }
 
     stopping_criterion = SingleRunCriterion()
@@ -45,15 +47,33 @@ class Solver(BaseSolver):
 
         print("Running the solver\n")
         dict_alignment = {}
-        for contrasts, sub in zip(self.source, self.source_subjects):
-            alignement_estimator = PairwiseAlignment(
-                alignment_method=self.method,
-                n_pieces=150,
-                mask=self.mask,
-                memory=Memory(),
-                memory_level=1,
-            ).fit(contrasts, self.target)
-            dict_alignment[sub] = alignement_estimator
+        if self.method == 'fastsrm':
+            srm_path = os.path.join(ROOT_FOLDER, 'fastsrm')
+            if not os.path.exists(srm_path):
+                os.makedirs(srm_path)
+            srm = IdentifiableFastSRM(n_components=50,
+                                      aggregate="mean",
+                                      temp_dir=srm_path, 
+                                      tol=1e-10,
+                                      n_iter=100,
+                                      n_jobs=5)
+            imgs_list = [self.mask.transform(contrasts).T for contrasts in self.source]
+            print("Fitting SRM")
+            alignment_estimator = srm.fit(
+                imgs_list
+            )
+            for sub in self.source_subjects:
+                dict_alignment[sub] = alignment_estimator
+        else:
+            for contrasts, sub in zip(self.source, self.source_subjects):
+                alignment_estimator = PairwiseAlignment(
+                    alignment_method=self.method,
+                    n_pieces=150,
+                    mask=self.mask,
+                    memory=Memory(),
+                    memory_level=1,
+                ).fit(contrasts, self.target)
+                dict_alignment[sub] = alignment_estimator
         self.alignment_estimators = dict_alignment
 
     def get_result(self):
@@ -61,5 +81,8 @@ class Solver(BaseSolver):
         # The outputs of this function are the arguments of `Objective.compute`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
+        output_dict = dict(alignment_estimators=self.alignment_estimators,
+                    method=self.method,
+                    )
 
-        return self.alignment_estimators
+        return output_dict

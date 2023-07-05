@@ -6,14 +6,15 @@ from benchopt import BaseObjective, safe_import_context
 with safe_import_context() as import_ctx:
     import numpy as np
     import pandas as pd
-    from fmralign.metrics import score_voxelwise
-    from nilearn.image import concat_imgs, index_img
+    from nilearn.image import concat_imgs
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import normalize
     from sklearn.svm import LinearSVC
     from sklearn.model_selection import LeaveOneGroupOut
     from sklearn.base import clone
     from tqdm import tqdm
+    from nilearn.image import concat_imgs
+    from joblib import Parallel, delayed
 
 
 # The benchmark objective must be named `Objective` and
@@ -75,22 +76,34 @@ class Objective(BaseObjective):
         # `set_data` can be used to preprocess the data. For instance,
         # if `whiten_y` is True, remove the mean of `y`.
 
-    def compute(self, alignment_estimators):
+    def compute(self, output_dic):
         # The arguments of this function are the outputs of the
         # `Solver.get_result`. This defines the benchmark's API to pass
         # solvers' result. This is customizable for each benchmark.
+        alignment_estimators = output_dic["alignment_estimators"]
+        method = output_dic["method"]
         pipeline = make_pipeline(LinearSVC(max_iter=10000))
         groups = self.projected_dataset[
             self.projected_dataset["subject"] != self.target_subject
         ]["subject"].values
         X = []
         for subject in self.source_subjects:
-            X.append(
-                self.mask.transform(alignment_estimators[subject].transform(
-                        self.projected_dataset[self.projected_dataset["subject"] == subject]["path"].unique().tolist()
+            if method == "fastsrm" :
+                input_data = self.mask.transform(
+                            concat_imgs(self.projected_dataset[self.projected_dataset["subject"] == subject]["path"].unique().tolist())
+                        )
+                X.append(
+                    alignment_estimators[subject].transform(
+                        [input_data.T]
+                    ).T
+                )
+            else:
+                X.append(
+                    self.mask.transform(alignment_estimators[subject].transform(
+                            self.projected_dataset[self.projected_dataset["subject"] == subject]["path"].unique().tolist()
+                        )
                     )
                 )
-            )
         X = np.vstack(X)
         X = normalize(X, axis=1)
         y = self.projected_dataset[
@@ -100,11 +113,18 @@ class Objective(BaseObjective):
         dict_acc = {}
         logo = LeaveOneGroupOut()
         print("Starting cross validation\n")
-        for train, test in tqdm(logo.split(X, y, groups=groups)):
+        
+        def decode(train, test):
             clf = clone(pipeline)
             clf.fit(X[train], y[train])
             score = clf.score(X[test], y[test])
-            dict_acc[groups[test][0]] = score
+            source_sub = groups[test][0]
+            return score, source_sub
+        
+        score_list = Parallel(n_jobs=10, verbose=3)(delayed(decode)(train, test) for train, test in logo.split(X, y, groups=groups))
+        
+        for score, source_sub in score_list:
+            dict_acc[source_sub] = score
 
         dict_acc["value"] = np.mean(list(dict_acc.values()))
         
