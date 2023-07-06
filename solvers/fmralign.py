@@ -25,7 +25,7 @@ class Solver(BaseSolver):
     # List of parameters for the solver. The benchmark will consider
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
-    parameters = {"method": ["identity", "fastsrm", "scaled_orthogonal", "ridge_cv"]}
+    parameters = {"method": ["identity", "optimal_transport", "fastsrm", "scaled_orthogonal", "ridge_cv"]}
 
     stopping_criterion = SingleRunCriterion()
 
