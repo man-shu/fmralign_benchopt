@@ -1,13 +1,14 @@
 # %%
 import pandas as pd
 import seaborn as sns
+import numpy as np
 import matplotlib.pyplot as plt
 
 # %%
 # get all the parquet files
-pqt = pd.read_parquet('../../outputs/benchopt_run_2023-07-05_12h16m30.parquet')
-pqt_ridge = pd.read_parquet('../../outputs/benchopt_run_2023-07-05_14h07m32.parquet')
-pqt = pd.concat([pqt, pqt_ridge], axis=0).reset_index(drop=True)
+pqt = pd.read_parquet('/storage/store3/work/pbarbara/fmralign_benchopt/outputs/benchopt_run_2023-07-06_14h23m09.parquet')
+# pqt_ridge = pd.read_parquet('../../outputs/benchopt_run_2023-07-05_14h07m32.parquet')
+# pqt = pd.concat([pqt, pqt_ridge], axis=0).reset_index(drop=True)
 
 # %%
 # creat a long dataframe with all the results
@@ -34,7 +35,7 @@ targets = ["sub-01",
             "sub-14",
             ]
 
-solvers = ['scaled_orthogonal', 'optimal_transport', 'ridge_cv']
+solvers = ['scaled_orthogonal', 'optimal_transport', 'ridge_cv', 'fastsrm', 'identity']
 
 for target in targets:
     for source in source_subjects:
@@ -47,9 +48,27 @@ for target in targets:
             d['accuracy'].append(pqt_solver.at[f'frmalign-benchopt[target_subject={target}]', f'objective_{source}'])
 df = pd.DataFrame(data=d)
 
+# Center data around identity
+# df['accuracy'] -= df[df['solver'] == 'identity']['accuracy'].mean()
+
 # seaborn plotting
 # %%
-sns.boxplot(data=df, x='solver', y='accuracy', hue='target',)
+plt.rcParams['figure.dpi'] = 300
+ax = sns.boxplot(data=df, y='solver', x='accuracy', color='white', showfliers=False, )
+# Add in points to show each observation
+sns.stripplot(x="accuracy", y="solver", data=df,
+              size=4, hue='source', dodge=True, jitter=False, palette='tab10')
+plt.xlabel('Accuracy')
+plt.ylabel('Solver')
+plt.legend(title='Left-out subject', loc='center left', bbox_to_anchor=(1, 0.5))
+# Fill with grey rectangles
+for i in range(len(solvers)):
+    ax.add_patch(plt.Rectangle((0, i-0.5), 1, 1, fill=True, color='grey', alpha=0.1*(1-i%2)))
+for x in np.arange(0.25, 0.45, 0.05):
+    plt.axvline(x=x, color='black', alpha=0.2, linestyle='--')
+plt.yticks(np.arange(len(solvers)), ["Scaled orthogonal", "Optimal transport", "Ridge regression", "FastSRM", "Identity"])
+plt.title('Mean prediction accuracy over all target subjects')
+plt.show()
 
 # %%
 sns.scatterplot(data=df, x='target', y='source', hue='accuracy', size='solver', sizes=(10, 100))
