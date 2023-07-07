@@ -14,5 +14,6 @@ joblib/
 benchopt.ini
 
 .DS_Store
+._*
 coverage.xml
 benchmark_utils/config.py
