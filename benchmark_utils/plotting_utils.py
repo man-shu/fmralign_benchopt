@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # %%
 # get all the parquet files
-pqt = pd.read_parquet('/storage/store3/work/pbarbara/fmralign_benchopt/outputs/benchopt_run_2023-07-06_14h23m09.parquet')
+pqt = pd.read_parquet('/storage/store3/work/pbarbara/fmralign_benchopt/outputs/benchopt_run_2023-07-07_18h04m34.parquet')
 # pqt_ridge = pd.read_parquet('../../outputs/benchopt_run_2023-07-05_14h07m32.parquet')
 # pqt = pd.concat([pqt, pqt_ridge], axis=0).reset_index(drop=True)
 

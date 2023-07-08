@@ -67,7 +67,7 @@ class Solver(BaseSolver):
             for contrasts, sub in zip(self.source, self.source_subjects):
                 alignment_estimator = PairwiseAlignment(
                     alignment_method=self.method,
-                    n_pieces=150,
+                    n_pieces=300,
                     mask=self.mask,
                     memory=Memory(),
                     memory_level=1,
