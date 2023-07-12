@@ -5,15 +5,12 @@ from benchopt import BaseObjective, safe_import_context
 # - getting requirements info when all dependencies are not installed.
 with safe_import_context() as import_ctx:
     import numpy as np
-    import pandas as pd
     from nilearn.image import concat_imgs
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import normalize
     from sklearn.svm import LinearSVC
     from sklearn.model_selection import LeaveOneGroupOut
     from sklearn.base import clone
-    from tqdm import tqdm
-    from nilearn.image import concat_imgs
     from joblib import Parallel, delayed
 
 
@@ -99,7 +96,9 @@ class Objective(BaseObjective):
                         .tolist()
                     )
                 )
-                X.append(alignment_estimators[subject].transform([input_data.T]).T)
+                X.append(
+                    alignment_estimators[subject].transform([input_data.T]).T
+                )
             else:
                 X.append(
                     self.mask.transform(

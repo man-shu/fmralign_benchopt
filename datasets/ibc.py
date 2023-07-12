@@ -6,7 +6,6 @@ from benchopt import BaseDataset, safe_import_context
 # - getting requirements info when all dependencies are not installed.
 with safe_import_context() as import_ctx:
     import os
-    import numpy as np
     import pandas as pd
 
     # import ibc_api.utils as ibc
@@ -32,7 +31,7 @@ class Dataset(BaseDataset):
         # to `Objective.set_data`. This defines the benchmark's
         # API to pass data. It is customizable for each benchmark.
 
-        data = fetch_ibc(data_dir=ROOT_FOLDER)
+        fetch_ibc(data_dir=ROOT_FOLDER)
         subjects = [
             f"sub-{i:02d}"
             for i in [
@@ -51,7 +50,8 @@ class Dataset(BaseDataset):
 
         archi_dataset["subject"] = subjects
         archi_dataset["path"] = [
-            os.path.join(ROOT_FOLDER, "alignment", f"{sub}_53_contrasts.nii.gz")
+            os.path.join(ROOT_FOLDER, "alignment",
+                         f"{sub}_53_contrasts.nii.gz")
             for sub in subjects
         ]
 
@@ -79,5 +79,7 @@ class Dataset(BaseDataset):
         ).fit()
 
         return dict(
-            alignment_dataset=archi_dataset, projected_dataset=rsvp_dataset, mask=masker
+            alignment_dataset=archi_dataset,
+            projected_dataset=rsvp_dataset,
+            mask=masker,
         )

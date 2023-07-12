@@ -4,10 +4,7 @@ from benchopt import BaseSolver, safe_import_context
 # - skipping import to speed up autocompletion in CLI.
 # - getting requirements info when all dependencies are not installed.
 with safe_import_context() as import_ctx:
-    import numpy as np
-
     # import your reusable functions here
-    from benchmark_utils import gradient_ols
     from benchopt.stopping_criterion import SingleRunCriterion
     from fmralign.pairwise_alignment import PairwiseAlignment
     from joblib import Memory
@@ -25,7 +22,15 @@ class Solver(BaseSolver):
     # List of parameters for the solver. The benchmark will consider
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
-    parameters = {"method": ["identity", "optimal_transport", "fastsrm", "scaled_orthogonal", "ridge_cv"]}
+    parameters = {
+        "method": [
+            "identity",
+            "optimal_transport",
+            "fastsrm",
+            "scaled_orthogonal",
+            "ridge_cv",
+        ]
+    }
 
     stopping_criterion = SingleRunCriterion()
 
@@ -58,7 +63,8 @@ class Solver(BaseSolver):
                 n_iter=100,
                 n_jobs=5,
             )
-            imgs_list = [self.mask.transform(contrasts).T for contrasts in self.source]
+            imgs_list = [self.mask.transform(contrasts).T
+                         for contrasts in self.source]
             print("Fitting SRM")
             alignment_estimator = srm.fit(imgs_list)
             for sub in self.source_subjects:
