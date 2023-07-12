@@ -21,7 +21,7 @@ with safe_import_context() as import_ctx:
 # inherit from `BaseObjective` for `benchopt` to work properly.
 class Objective(BaseObjective):
     # Name to select the objective in the CLI and to display the results.
-    name = "frmalign-benchopt"
+    name = "fMRI alignment"
 
     # List of parameters for the objective. The benchmark will consider
     # the cross product for each key in the dictionary.
