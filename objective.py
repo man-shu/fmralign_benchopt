@@ -33,6 +33,7 @@ class Objective(BaseObjective):
             "sub-07",
             "sub-09",
             "sub-11",
+            "sub-12"
             "sub-13",
             "sub-14",
         ],

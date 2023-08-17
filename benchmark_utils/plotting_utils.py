@@ -23,6 +23,7 @@ source_subjects = [
     "sub-07",
     "sub-09",
     "sub-11",
+    "sub-12"
     "sub-13",
     "sub-14",
 ]
@@ -34,6 +35,7 @@ targets = [
     "sub-07",
     "sub-09",
     "sub-11",
+    "sub-12"
     "sub-13",
     "sub-14",
 ]
@@ -110,11 +112,11 @@ for x in np.arange(0.25, 0.45, 0.05):
 plt.yticks(
     np.arange(len(solvers)),
     [
-        "Scaled orthogonal",
-        "Optimal transport",
-        "Ridge regression",
-        "FastSRM",
-        "Identity",
+        "Piecewise\nscaled orthogonal",
+        "Piecewise\noptimal transport",
+        "Piecewise\nridge regression",
+        "Piecewise\nFastSRM",
+        "Anatomical alignment",
     ],
 )
 plt.title("Mean prediction accuracy over all target subjects")
