@@ -9,6 +9,7 @@ with safe_import_context() as import_ctx:
     from fmralign.pairwise_alignment import PairwiseAlignment
     from joblib import Memory
     from fastsrm.identifiable_srm import IdentifiableFastSRM
+    from fmralign.alignment_methods import OptimalTransportAlignment
     from benchmark_utils.config import ROOT_FOLDER
     import os
 
@@ -68,6 +69,17 @@ class Solver(BaseSolver):
             print("Fitting SRM")
             alignment_estimator = srm.fit(imgs_list)
             for sub in self.source_subjects:
+                dict_alignment[sub] = alignment_estimator
+        elif self.method == "optimal_transport":
+            for contrasts, sub in zip(self.source, self.source_subjects):
+                pairwise_method = OptimalTransportAlignment(reg=.1)
+                alignment_estimator = PairwiseAlignment(
+                    alignment_method=pairwise_method,
+                    n_pieces=300,
+                    mask=self.mask,
+                    memory=Memory(),
+                    memory_level=1,
+                ).fit(contrasts, self.target)
                 dict_alignment[sub] = alignment_estimator
         else:
             for contrasts, sub in zip(self.source, self.source_subjects):
