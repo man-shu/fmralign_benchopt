@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # get all the parquet files
 pqt = pd.read_parquet(
     ("/storage/store3/work/pbarbara/fmralign_benchopt/"
-     "outputs/benchopt_run_2023-07-07_18h04m34.parquet")
+     "outputs/benchopt_run_2023-08-22_04h50m36.parquet")
 )
 
 # %%
@@ -23,7 +23,7 @@ source_subjects = [
     "sub-07",
     "sub-09",
     "sub-11",
-    "sub-12"
+    "sub-12",
     "sub-13",
     "sub-14",
 ]
@@ -35,7 +35,7 @@ targets = [
     "sub-07",
     "sub-09",
     "sub-11",
-    "sub-12"
+    "sub-12",
     "sub-13",
     "sub-14",
 ]
@@ -60,7 +60,7 @@ for target in targets:
             d["solver"].append(solver)
             d["accuracy"].append(
                 pqt_solver.at[
-                    f"frmalign-benchopt[target_subject={target}]",
+                    f"fMRI alignment[target_subject={target}]",
                     f"objective_{source}",
                 ]
             )
@@ -69,15 +69,39 @@ df = pd.DataFrame(data=d)
 # Center data around identity
 # df['accuracy'] -= df[df['solver'] == 'identity']['accuracy'].mean()
 
+fugw_dir = "/data/parietal/store3/work/pbarbara/outputs/fugw-paper-2023/ibc/decoding/aligned/2023-08-20-02-56-50_/"
+solvers.insert(0,"fugw")
+for target in targets:
+    scores = pd.read_csv(fugw_dir + f"{target}_aligned.csv")[["decoding_score", "subject"]]
+    for source in source_subjects:
+        if source == target:
+            output = pd.DataFrame({
+                    "target": target,
+                    "source": source,
+                    "solver": "fugw",
+                    "accuracy": np.nan,
+                    }, index=[0])
+        else:
+            output = pd.DataFrame({
+                    "target": target,
+                    "source": source,
+                    "solver": "fugw",
+                    "accuracy": scores[scores["subject"] == source].decoding_score.values[0],
+                }, index=[0])
+        df = pd.concat([output, df], ignore_index=True)
+
+df.sort_values(by=["target", "source"], inplace=True)
+
 # seaborn plotting
 # %%
-plt.rcParams["figure.dpi"] = 300
+plt.rcParams["figure.dpi"] = 500
 ax = sns.boxplot(
     data=df,
     y="solver",
     x="accuracy",
     color="white",
     showfliers=False,
+    # showmeans=False,
 )
 # Add in points to show each observation
 sns.stripplot(
@@ -107,11 +131,12 @@ for i in range(len(solvers)):
             alpha=0.1 * (1 - i % 2),
         )
     )
-for x in np.arange(0.25, 0.45, 0.05):
+for x in np.arange(0.20, 0.50, 0.05):
     plt.axvline(x=x, color="black", alpha=0.2, linestyle="--")
 plt.yticks(
     np.arange(len(solvers)),
     [
+        "FUGW\n(ours)",
         "Piecewise\nscaled orthogonal",
         "Piecewise\noptimal transport",
         "Piecewise\nridge regression",
@@ -119,7 +144,8 @@ plt.yticks(
         "Anatomical alignment",
     ],
 )
-plt.title("Mean prediction accuracy over all target subjects")
+plt.title("Prediction accuracy over all target subjects (IBC RSVP dataset)\n")
+plt.xlim(0.20, 0.50)
 plt.show()
 
 # %%
